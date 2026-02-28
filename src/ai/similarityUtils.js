@@ -21,17 +21,19 @@ export function cosineSimilarity(vectorA, vectorB) {
  * @param {number[]} queryEmbedding - Query image embedding
  * @param {Array<{embedding: number[], ...}>} catalog - Catalog items with embeddings
  * @param {number} topK - Number of results to return
+ * @param {number} minSimilarity - Minimum similarity threshold (0-1)
  * @returns {Array<{item: Object, similarity: number}>} Top K similar items
  */
-export function findTopSimilar(queryEmbedding, catalog, topK = 10) {
+export function findTopSimilar(queryEmbedding, catalog, topK = 10, minSimilarity = 0.3) {
   // Calculate similarity for each catalog item
   const results = catalog.map(item => ({
     item,
     similarity: cosineSimilarity(queryEmbedding, item.embedding)
   }));
 
-  // Sort by similarity (descending) and return top K
+  // Sort by similarity (descending), filter by threshold, and return top K
   return results
+    .filter(r => r.similarity >= minSimilarity)
     .sort((a, b) => b.similarity - a.similarity)
     .slice(0, topK);
 }
