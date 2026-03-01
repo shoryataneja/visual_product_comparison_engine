@@ -2,7 +2,7 @@
 
 A fully client-side AI-powered visual similarity search system that enables offline product discovery through image comparison using deep learning embeddings.
 
-**🚀 [Live Demo](https://visualproductcomparisonengine-nodvupa37-dncoder14s-projects.vercel.app/)**
+**[Live Demo](https://visualproductcomparisonengine-nodvupa37-dncoder14s-projects.vercel.app/)**
 
 ---
 
