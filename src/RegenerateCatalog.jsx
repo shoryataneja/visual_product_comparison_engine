@@ -11,15 +11,15 @@ function RegenerateCatalog() {
   const generateCatalog = async () => {
     setProgress('Starting...');
     const products = [];
-    
+
     const allImages = Object.entries(ecommerceImages).map(([path, url]) => ({ path, url }));
-    
+
     for (let i = 0; i < allImages.length; i++) {
       const { path, url } = allImages[i];
       const filename = path.split('/').pop();
-      
+
       setProgress(`Processing ${i + 1}/${allImages.length}: ${filename}`);
-      
+
       try {
         const img = new Image();
         await new Promise((resolve, reject) => {
@@ -27,12 +27,11 @@ function RegenerateCatalog() {
           img.onerror = reject;
           img.src = url;
         });
-        
+
         const embedding = await extractEmbedding(img);
-        
+
         const imagePath = `/pictures for ecommerce/${filename}`;
-        
-        // Auto-detect category from filename
+
         const lowerName = filename.toLowerCase();
         let category = 'Product';
         if (lowerName.includes('shoe') || lowerName.includes('sandal') || lowerName.includes('chappal') || lowerName.includes('jutti') || lowerName.includes('mojari') || lowerName.includes('khusa') || lowerName.includes('nagra') || lowerName.includes('kolhapuri')) {
@@ -46,7 +45,7 @@ function RegenerateCatalog() {
         } else if (lowerName.includes('lamp') || lowerName.includes('mat') || lowerName.includes('basket') || lowerName.includes('steamer') || lowerName.includes('furniture')) {
           category = 'Home & Decor';
         }
-        
+
         products.push({
           id: `product_${String(i + 1).padStart(3, '0')}`,
           name: filename.replace(/\.[^/.]+$/, ''),
@@ -55,12 +54,12 @@ function RegenerateCatalog() {
           image: imagePath,
           embedding: embedding
         });
-        
+
       } catch (error) {
         console.error(`Failed ${filename}:`, error);
       }
     }
-    
+
     const catalogData = { products };
     setCatalog(JSON.stringify(catalogData, null, 2));
     setProgress(`Done! Generated ${products.length} products. Go to localhost:5173/regenerate to regenerate with categories.`);
@@ -99,9 +98,9 @@ function RegenerateCatalog() {
               💾 Download catalog.json
             </button>
           </div>
-          <textarea 
-            value={catalog} 
-            readOnly 
+          <textarea
+            value={catalog}
+            readOnly
             style={{ width: '100%', height: '400px', fontFamily: 'monospace', fontSize: '12px', padding: '10px', border: '1px solid #ccc', borderRadius: '4px' }}
           />
           <p style={{ marginTop: '10px', color: '#666', fontSize: '14px' }}>

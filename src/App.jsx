@@ -1,24 +1,30 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { extractEmbedding } from './ai/index.js';
 import { findTopSimilar } from './ai/similarityUtils.js';
 
 import ImageUploader from './components/ImageUploader';
 import ResultsGrid from './components/ResultsGrid';
 import LandingPage from './components/LandingPage';
-import { PiUserCircleDuotone, PiShieldCheckFill } from 'react-icons/pi';
+import { PiUserCircleDuotone, PiShieldCheckFill, PiClockCounterClockwiseBold, PiTrashBold } from 'react-icons/pi';
 import './App.css';
 
 function App() {
   const [catalog, setCatalog] = useState([]);
   const [results, setResults] = useState([]);
+  const [allResults, setAllResults] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCatalogLoading, setIsCatalogLoading] = useState(true);
   const [showApp, setShowApp] = useState(false);
-
-  // Track the uploaded image visually for the layout
+  const [threshold, setThreshold] = useState(30);
   const [queryImageLocal, setQueryImageLocal] = useState(null);
+  const [history, setHistory] = useState([]);
+  const catalogRef = useRef([]);
 
-  // Load catalog on mount
+  const clearHistory = () => {
+    setHistory([]);
+    localStorage.removeItem('visualSearchHistory');
+  };
+
   useEffect(() => {
     async function loadCatalog() {
       try {
@@ -26,6 +32,7 @@ function App() {
         if (!response.ok) throw new Error('Failed to load catalog');
         const data = await response.json();
         setCatalog(data.products || []);
+        catalogRef.current = data.products || [];
       } catch (error) {
         console.error('Error loading catalog:', error);
       } finally {
@@ -33,24 +40,110 @@ function App() {
       }
     }
     loadCatalog();
+
+    const savedHistory = localStorage.getItem('visualSearchHistory');
+    if (savedHistory) {
+      try {
+        setHistory(JSON.parse(savedHistory));
+      } catch (e) {
+        console.error('Failed to parse history', e);
+      }
+    }
   }, []);
 
-  const handleImageUpload = async (imgElement) => {
-    setIsProcessing(true);
-    setResults([]); // clear past results while scanning
+  useEffect(() => {
+    localStorage.setItem('visualSearchHistory', JSON.stringify(history.slice(0, 10)));
+  }, [history]);
 
-    // Increased delay for startup scanning state feel
+  useEffect(() => {
+    if (allResults.length > 0) {
+      const minSim = threshold / 100;
+      const filtered = allResults
+        .filter(r => r.similarity >= minSim)
+        .sort((a, b) => b.similarity - a.similarity);
+      setResults(filtered);
+    }
+  }, [threshold, allResults]);
+
+  const addToHistory = (imgData) => {
+    setHistory(prev => {
+      const filtered = prev.filter(item => item.image.slice(0, 50) !== imgData.slice(0, 50));
+      return [{ image: imgData, timestamp: Date.now() }, ...filtered].slice(0, 8);
+    });
+  };
+
+  const getBase64Image = (img) => {
+    const canvas = document.createElement("canvas");
+    const MAX_WIDTH = 150;
+    const scale = MAX_WIDTH / img.naturalWidth;
+    canvas.width = MAX_WIDTH;
+    canvas.height = img.naturalHeight * scale;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL("image/webp", 0.7);
+  };
+
+  const runSearch = async (imgElement, skipHistory = false) => {
+    setIsProcessing(true);
+    setResults([]);
+    setAllResults([]);
+
+    let historyImage = null;
+    if (!skipHistory) {
+      try {
+        historyImage = getBase64Image(imgElement);
+      } catch (e) {
+        console.warn("Could not capture history image", e);
+      }
+    }
+
     setTimeout(async () => {
       try {
         const queryEmbedding = await extractEmbedding(imgElement);
-        const similarProducts = findTopSimilar(queryEmbedding, catalog, 6); // Up to 6 matches (3x2 grid)
-        setResults(similarProducts);
+        const similarProducts = findTopSimilar(queryEmbedding, catalogRef.current, 20, 0);
+        setAllResults(similarProducts);
+        const minSim = threshold / 100;
+        setResults(similarProducts.filter(r => r.similarity >= minSim));
+
+        if (!skipHistory && historyImage) {
+          addToHistory(historyImage);
+        }
       } catch (error) {
         console.error('Error during image processing:', error);
       } finally {
         setIsProcessing(false);
       }
-    }, 2800); // 2.8s scan duration for visual SaaS effect
+    }, 2800);
+  };
+
+  const handleImageUpload = async (imgElement) => {
+    await runSearch(imgElement);
+  };
+
+  const handleChainSearch = async (item) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.src = item.image;
+    img.onload = async () => {
+      setQueryImageLocal(item.image);
+      await runSearch(img);
+    };
+  };
+
+  const handleHistorySearch = (item) => {
+    const img = new Image();
+    img.src = item.image;
+    img.onload = async () => {
+      setQueryImageLocal(item.image);
+      await runSearch(img, true);
+    };
+  };
+
+  const handleNewSearch = () => {
+    setResults([]);
+    setAllResults([]);
+    setQueryImageLocal(null);
+    setThreshold(30);
   };
 
   if (!showApp) {
@@ -59,7 +152,6 @@ function App() {
 
   return (
     <div className="app-container">
-      {/* Top Navigation */}
       <nav className="top-nav">
         <div
           className="brand app-brand-btn"
@@ -74,6 +166,12 @@ function App() {
         </div>
 
         <div className="nav-right">
+          {!isProcessing && results.length > 0 && (
+            <button className="btn-new-search-nav" onClick={handleNewSearch}>
+              <PiClockCounterClockwiseBold size={18} />
+              <span>Reset Search</span>
+            </button>
+          )}
           <div className="status-badge">
             <div className="status-dot"></div>
             LOCAL AI ENGINE: ONLINE
@@ -84,7 +182,6 @@ function App() {
         </div>
       </nav>
 
-      {/* Main Content Area */}
       <main className="main-content">
         {(!results || results.length === 0) && (
           <div className="hero">
@@ -102,6 +199,31 @@ function App() {
           </div>
         ) : (
           <>
+            {!isProcessing && (!results || results.length === 0) && history.length > 0 && (
+              <div className="history-section">
+                <div className="history-header">
+                  <div className="history-title">
+                    <PiClockCounterClockwiseBold />
+                    <span>Recent Visual Queries</span>
+                  </div>
+                  <button className="clear-history-btn" onClick={clearHistory}>
+                    <PiTrashBold />
+                    Clear
+                  </button>
+                </div>
+                <div className="history-list">
+                  {history.map((item, idx) => (
+                    <div key={item.timestamp || idx} className="history-item" onClick={() => handleHistorySearch(item)}>
+                      <img src={item.image} alt="Past search" />
+                      <div className="history-item-overlay">
+                        <span>Re-search</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {(!results || results.length === 0 || isProcessing) && (
               <ImageUploader
                 onImageUpload={handleImageUpload}
@@ -111,13 +233,40 @@ function App() {
             )}
 
             {!isProcessing && results.length > 0 && (
-              <ResultsGrid results={results} isLoading={isProcessing} queryImage={queryImageLocal} />
+              <>
+                <div className="slider-panel">
+                  <div className="slider-label">
+                    <span>AI Confidence Threshold</span>
+                    <span className="slider-value">{threshold}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="95"
+                    value={threshold}
+                    onChange={(e) => setThreshold(Number(e.target.value))}
+                    className="similarity-slider"
+                  />
+                  <div className="slider-hints">
+                    <span>Show More</span>
+                    <span>{results.length} results</span>
+                    <span>Exact Only</span>
+                  </div>
+                </div>
+
+                <ResultsGrid
+                  results={results}
+                  isLoading={isProcessing}
+                  queryImage={queryImageLocal}
+                  onChainSearch={handleChainSearch}
+                  onNewSearch={handleNewSearch}
+                />
+              </>
             )}
           </>
         )}
       </main>
 
-      {/* Footer */}
       <footer className="app-footer">
         <div className="footer-left">
           <PiShieldCheckFill size={16} />

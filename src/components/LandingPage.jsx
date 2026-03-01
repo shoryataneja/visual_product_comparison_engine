@@ -16,7 +16,6 @@ import './LandingPage.css';
 const LandingPage = ({ onLaunch }) => {
 
     useEffect(() => {
-        // Smooth scrolling for anchor links within the landing page
         document.querySelectorAll('.nav-links a').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 e.preventDefault();

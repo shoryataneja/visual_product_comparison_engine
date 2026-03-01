@@ -2,7 +2,6 @@ import React from 'react';
 import { Target } from 'lucide-react';
 
 const SimilarityBadge = ({ score }) => {
-    // Convert 0-1 score to percentage
     const percentage = Math.round(score * 100);
 
     return (

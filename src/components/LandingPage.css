@@ -1,19 +1,19 @@
 .landing-page {
     background: linear-gradient(180deg,
             #0a0f1e 0%,
-            /* Deep navy at very top (hero) */
+            
             #0d0f1c 15%,
-            /* Slightly desaturated navy */
+            
             #0b0e1a 30%,
-            /* Problem section - very dark navy */
+            
             #080a14 50%,
-            /* Middle — deepest indigo-dark */
+            
             #06080f 70%,
-            /* Solution section — near black with blue */
+            
             #030408 85%,
-            /* How it Works — almost pure black */
+            
             #000000 100%
-            /* CTA — true black */
+            
         );
     color: #ffffff;
     min-height: 100vh;
@@ -24,7 +24,7 @@
     z-index: 1;
 }
 
-/* Animated Ambient Glow Shapes */
+
 .landing-page::before,
 .landing-page::after {
     content: '';
@@ -65,7 +65,7 @@
     }
 }
 
-/* Fixed Glassmorphism Navigation */
+
 .landing-nav {
     display: flex;
     justify-content: space-between;
@@ -133,7 +133,7 @@
     width: 100%;
 }
 
-/* Hero Section */
+
 .hero-section {
     min-height: 100vh;
     display: flex;
@@ -233,7 +233,7 @@
     box-shadow: 0 10px 30px rgba(255, 255, 255, 0.1);
 }
 
-/* Content Sections */
+
 .problem-section,
 .solution-section,
 .how-section,
@@ -263,7 +263,7 @@
     line-height: 1.7;
 }
 
-/* Glassmorphism Cards */
+
 .card-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
@@ -276,9 +276,9 @@
     backdrop-filter: blur(30px);
     -webkit-backdrop-filter: blur(30px);
     border-radius: 32px;
-    /* Smoother curve like a modern phone */
+    
     padding: 4rem 2.5rem;
-    /* Taller top/bottom padding */
+    
     text-align: left;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     display: flex;
@@ -288,11 +288,11 @@
     position: relative;
     overflow: hidden;
     min-height: 460px;
-    /* Forces a taller, mobile-like portrait ratio */
+    
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.02);
 }
 
-/* Hover state glowing effect */
+
 .feature-card::before {
     content: '';
     position: absolute;
@@ -360,7 +360,7 @@
     z-index: 1;
 }
 
-/* How It Works Flow */
+
 .how-section {
     position: relative;
 }
@@ -383,17 +383,17 @@
     flex: 1;
     position: relative;
     padding: 4rem 2.5rem;
-    /* Taller top/bottom padding */
+    
     background: rgba(15, 23, 42, 0.4);
     border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 32px;
-    /* Smoother curve like a modern phone */
+    
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     z-index: 1;
     min-height: 420px;
-    /* Forces a taller, mobile-like portrait ratio */
+    
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
 }
 
